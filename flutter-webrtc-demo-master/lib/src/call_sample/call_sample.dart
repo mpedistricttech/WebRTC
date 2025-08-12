@@ -1,8 +1,16 @@
+import 'dart:io';
+import 'dart:math';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:path_provider/path_provider.dart';
 import 'dart:core';
 import '../widgets/screen_select_dialog.dart';
 import 'signaling.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class CallSample extends StatefulWidget {
   static String tag = 'call_sample';
@@ -14,6 +22,7 @@ class CallSample extends StatefulWidget {
 }
 
 class _CallSampleState extends State<CallSample> {
+  final GlobalKey _captureKey = GlobalKey();
   Signaling? _signaling;
   List<dynamic> _peers = [];
   String? _selfId;
@@ -245,6 +254,90 @@ class _CallSampleState extends State<CallSample> {
     _signaling?.muteMic();
   }
 
+  _imageCapture() async {
+    try {
+      RenderRepaintBoundary boundary = _captureKey.currentContext!
+          .findRenderObject() as RenderRepaintBoundary;
+
+      ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+      ByteData? byteData =
+          await image.toByteData(format: ui.ImageByteFormat.png);
+      Uint8List pngBytes = byteData!.buffer.asUint8List();
+
+      // Request storage permission on Android
+      if (Platform.isAndroid) {
+        Map<Permission, PermissionStatus> statuses = await [
+          Permission.storage,
+          Permission.manageExternalStorage,
+          //add more permission to request here.
+        ].request();
+
+        if (statuses[Permission.manageExternalStorage]!.isGranted) {
+          // status = await Permission.manageExternalStorage.request();
+          // if (!status.isGranted) {
+          //   ScaffoldMessenger.of(context).showSnackBar(
+          //       SnackBar(content: Text('Storage permission denied')));
+          //   return;
+          // }
+
+          // Get downloads directory
+          Directory? downloadsDirectory;
+          if (Platform.isAndroid) {
+            downloadsDirectory = Directory('/storage/emulated/0/Download');
+          } else {
+            // For iOS or others fallback
+            downloadsDirectory = await getApplicationDocumentsDirectory();
+          }
+
+          String filePath =
+              '${downloadsDirectory.path}/screenshot_${DateTime.now().millisecondsSinceEpoch}.png';
+
+          final file = File(filePath);
+          await file.writeAsBytes(pngBytes);
+
+          print('Saved screenshot to $filePath');
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Screenshot saved to Downloads!')));
+        } else {}
+      }
+    } catch (e) {
+      print('Error capturing screenshot: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to capture screenshot')));
+    }
+
+    // try {
+    //   RenderRepaintBoundary boundary = _captureKey.currentContext!
+    //       .findRenderObject() as RenderRepaintBoundary;
+
+    //   ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+    //   ByteData? byteData =
+    //       await image.toByteData(format: ui.ImageByteFormat.png);
+    //   Uint8List pngBytes = byteData!.buffer.asUint8List();
+
+    //   final directory = await getApplicationDocumentsDirectory();
+    //   String filePath =
+    //       '${directory.path}/screenshot_${DateTime.now().millisecondsSinceEpoch}.png';
+
+    //   final file = File(filePath);
+    //   await file.writeAsBytes(pngBytes);
+
+    //   print('Saved screenshot to $filePath');
+    //   ScaffoldMessenger.of(context)
+    //       .showSnackBar(SnackBar(content: Text('Screenshot saved!')));
+
+    //   final appDocDir = await getApplicationDocumentsDirectory();
+    //   print('App Documents Directory: ${appDocDir.path}');
+
+    //   final extStorageDir = await getExternalStorageDirectory();
+    //   print('External Storage Directory: ${extStorageDir?.path}');
+    // } catch (e) {
+    //   print('Error capturing screenshot: $e');
+    //   ScaffoldMessenger.of(context).showSnackBar(
+    //       SnackBar(content: Text('Failed to capture screenshot')));
+    // }
+  }
+
   _buildRow(context, peer) {
     var self = (peer['id'] == _selfId);
     return ListBody(children: <Widget>[
@@ -269,7 +362,7 @@ class _CallSampleState extends State<CallSample> {
                         color: self ? Colors.grey : Colors.black),
                     onPressed: () => _invitePeer(context, peer['id'], true),
                     tooltip: 'Screen sharing',
-                  )
+                  ),
                 ])),
         subtitle: Text('[' + peer['user_agent'] + ']'),
       ),
@@ -294,7 +387,7 @@ class _CallSampleState extends State<CallSample> {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: _inCalling
           ? SizedBox(
-              width: 240.0,
+              width: 280.0,
               child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: <Widget>[
@@ -318,10 +411,58 @@ class _CallSampleState extends State<CallSample> {
                       child: const Icon(Icons.mic_off),
                       tooltip: 'Mute Mic',
                       onPressed: _muteMic,
+                    ),
+                    FloatingActionButton(
+                      child: const Icon(Icons.photo_camera),
+                      tooltip: 'Image Capture',
+                      onPressed: _imageCapture,
                     )
                   ]))
           : null,
       body: _inCalling
+          ? OrientationBuilder(builder: (context, orientation) {
+              return Container(
+                child: Stack(children: <Widget>[
+                  // Wrap this container with RepaintBoundary
+                  RepaintBoundary(
+                    key: _captureKey,
+                    child: Positioned(
+                      left: 0.0,
+                      right: 0.0,
+                      top: 0.0,
+                      bottom: 0.0,
+                      child: Container(
+                        margin: EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 0.0),
+                        width: MediaQuery.of(context).size.width,
+                        height: MediaQuery.of(context).size.height,
+                        child: RTCVideoView(_remoteRenderer),
+                        decoration: BoxDecoration(color: Colors.black54),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    left: 20.0,
+                    top: 20.0,
+                    child: Container(
+                      width: orientation == Orientation.portrait ? 90.0 : 120.0,
+                      height:
+                          orientation == Orientation.portrait ? 120.0 : 90.0,
+                      child: RTCVideoView(_localRenderer, mirror: true),
+                      decoration: BoxDecoration(color: Colors.black54),
+                    ),
+                  ),
+                ]),
+              );
+            })
+          : ListView.builder(
+              shrinkWrap: true,
+              padding: const EdgeInsets.all(0.0),
+              itemCount: (_peers != null ? _peers.length : 0),
+              itemBuilder: (context, i) {
+                return _buildRow(context, _peers[i]);
+              }),
+
+      /*  _inCalling
           ? OrientationBuilder(builder: (context, orientation) {
               return Container(
                 child: Stack(children: <Widget>[
@@ -351,13 +492,7 @@ class _CallSampleState extends State<CallSample> {
                 ]),
               );
             })
-          : ListView.builder(
-              shrinkWrap: true,
-              padding: const EdgeInsets.all(0.0),
-              itemCount: (_peers != null ? _peers.length : 0),
-              itemBuilder: (context, i) {
-                return _buildRow(context, _peers[i]);
-              }),
+            */
     );
   }
 }
