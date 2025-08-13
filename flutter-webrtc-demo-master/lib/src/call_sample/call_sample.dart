@@ -2,7 +2,7 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
-
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:path_provider/path_provider.dart';
@@ -143,7 +143,7 @@ class _CallSampleState extends State<CallSample> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text("title"),
+          title: Text("Calling"),
           content: Text("accept?"),
           actions: <Widget>[
             MaterialButton(
@@ -171,7 +171,7 @@ class _CallSampleState extends State<CallSample> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text("title"),
+          title: Text("Calling"),
           content: Text("waiting"),
           actions: <Widget>[
             TextButton(
@@ -255,6 +255,7 @@ class _CallSampleState extends State<CallSample> {
   }
 
   _imageCapture() async {
+    EasyLoading.show(status: 'loading...');
     try {
       RenderRepaintBoundary boundary = _captureKey.currentContext!
           .findRenderObject() as RenderRepaintBoundary;
@@ -298,9 +299,12 @@ class _CallSampleState extends State<CallSample> {
           print('Saved screenshot to $filePath');
           ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('Screenshot saved to Downloads!')));
-        } else {}
+        } else {
+          EasyLoading.dismiss();
+        }
       }
     } catch (e) {
+      EasyLoading.dismiss();
       print('Error capturing screenshot: $e');
       ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to capture screenshot')));
@@ -374,8 +378,9 @@ class _CallSampleState extends State<CallSample> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('P2P Call Sample' +
-            (_selfId != null ? ' [Your ID ($_selfId)] ' : '')),
+        title: Text("Video Call "),
+        // title: Text('P2P Call Sample' +
+        //     (_selfId != null ? ' [Your ID ($_selfId)] ' : '')),
         actions: <Widget>[
           IconButton(
             icon: const Icon(Icons.settings),
@@ -396,22 +401,22 @@ class _CallSampleState extends State<CallSample> {
                       tooltip: 'Camera',
                       onPressed: _switchCamera,
                     ),
-                    FloatingActionButton(
-                      child: const Icon(Icons.desktop_mac),
-                      tooltip: 'Screen Sharing',
-                      onPressed: () => selectScreenSourceDialog(context),
-                    ),
+                    // FloatingActionButton(
+                    //   child: const Icon(Icons.desktop_mac),
+                    //   tooltip: 'Screen Sharing',
+                    //   onPressed: () => selectScreenSourceDialog(context),
+                    // ),
                     FloatingActionButton(
                       onPressed: _hangUp,
                       tooltip: 'Hangup',
                       child: Icon(Icons.call_end),
                       backgroundColor: Colors.pink,
                     ),
-                    FloatingActionButton(
-                      child: const Icon(Icons.mic_off),
-                      tooltip: 'Mute Mic',
-                      onPressed: _muteMic,
-                    ),
+                    // FloatingActionButton(
+                    //   child: const Icon(Icons.mic_off),
+                    //   tooltip: 'Mute Mic',
+                    //   onPressed: _muteMic,
+                    // ),
                     FloatingActionButton(
                       child: const Icon(Icons.photo_camera),
                       tooltip: 'Image Capture',
@@ -421,37 +426,34 @@ class _CallSampleState extends State<CallSample> {
           : null,
       body: _inCalling
           ? OrientationBuilder(builder: (context, orientation) {
-              return Container(
-                child: Stack(children: <Widget>[
-                  // Wrap this container with RepaintBoundary
-                  RepaintBoundary(
-                    key: _captureKey,
-                    child: Positioned(
-                      left: 0.0,
-                      right: 0.0,
-                      top: 0.0,
-                      bottom: 0.0,
-                      child: Container(
-                        margin: EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 0.0),
-                        width: MediaQuery.of(context).size.width,
-                        height: MediaQuery.of(context).size.height,
-                        child: RTCVideoView(_remoteRenderer),
-                        decoration: BoxDecoration(color: Colors.black54),
+              return RepaintBoundary(
+                key: _captureKey,
+                child: Container(
+                  width: MediaQuery.of(context).size.width,
+                  height: MediaQuery.of(context).size.height,
+                  child: Stack(
+                    children: <Widget>[
+                      Positioned.fill(
+                        child: Container(
+                          color: Colors.black54,
+                          child: RTCVideoView(_remoteRenderer),
+                        ),
                       ),
-                    ),
+                      Positioned(
+                        left: 20.0,
+                        top: 20.0,
+                        width:
+                            orientation == Orientation.portrait ? 90.0 : 120.0,
+                        height:
+                            orientation == Orientation.portrait ? 120.0 : 90.0,
+                        child: Container(
+                          color: Colors.black54,
+                          child: RTCVideoView(_localRenderer, mirror: true),
+                        ),
+                      ),
+                    ],
                   ),
-                  Positioned(
-                    left: 20.0,
-                    top: 20.0,
-                    child: Container(
-                      width: orientation == Orientation.portrait ? 90.0 : 120.0,
-                      height:
-                          orientation == Orientation.portrait ? 120.0 : 90.0,
-                      child: RTCVideoView(_localRenderer, mirror: true),
-                      decoration: BoxDecoration(color: Colors.black54),
-                    ),
-                  ),
-                ]),
+                ),
               );
             })
           : ListView.builder(

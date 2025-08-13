@@ -48,7 +48,7 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       home: Scaffold(
           appBar: AppBar(
-            title: Text('Flutter-WebRTC example'),
+            title: Text('WebRTC'),
           ),
           body: ListView.builder(
               shrinkWrap: true,
@@ -121,19 +121,21 @@ class _MyAppState extends State<MyApp> {
   _initItems() {
     items = <RouteItem>[
       RouteItem(
-          title: 'P2P Call Sample',
-          subtitle: 'P2P Call Sample.',
+          // title: 'P2P Call Sample',
+          // subtitle: 'P2P Call Sample.',
+          title: 'Video Calling App',
+          subtitle: 'Video Calling App.',
           push: (BuildContext context) {
             _datachannel = false;
             _showAddressDialog(context);
           }),
-      RouteItem(
-          title: 'Data Channel Sample',
-          subtitle: 'P2P Data Channel.',
-          push: (BuildContext context) {
-            _datachannel = true;
-            _showAddressDialog(context);
-          }),
+      // RouteItem(
+      //     title: 'Data Channel Sample',
+      //     subtitle: 'P2P Data Channel.',
+      //     push: (BuildContext context) {
+      //       _datachannel = true;
+      //       _showAddressDialog(context);
+      //     }),
     ];
   }
 }
