@@ -4,9 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'src/call_sample/call_sample.dart';
+import 'src/call_sample/call_sample_with_callkit.dart';
+import 'src/call_sample/call_sample_unified.dart';
 import 'src/call_sample/data_channel_sample.dart';
 import 'src/route_item.dart';
 import 'src/splash_screen.dart';
+import 'src/theme/app_theme.dart';
+import 'src/screens/home_screen_v2.dart';
 
 void main() => runApp(new MyApp());
 
@@ -247,7 +251,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   ],
                 ),
               ),
-              
+
               // Welcome message
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -260,16 +264,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 30),
-              
+
               // Features list
               Expanded(
                 child: ListView.builder(
                   padding: const EdgeInsets.only(bottom: 20),
                   itemCount: widget.items.length,
                   itemBuilder: (context, index) {
-                    return _buildFeatureCard(context, widget.items[index], index);
+                    return _buildFeatureCard(
+                        context, widget.items[index], index);
                   },
                 ),
               ),
@@ -298,24 +303,11 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'CM Relief Fund',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF1E1E1E),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF2C3E50),
-          elevation: 0,
-          titleTextStyle: TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
+      theme: AppTheme.darkTheme,
       initialRoute: '/',
       routes: {
         '/': (context) => SplashScreen(),
-        '/home': (context) => HomeScreen(items: items),
+        '/home': (context) => HomeScreenV2(items: items),
       },
     );
   }
@@ -342,7 +334,7 @@ class _MyAppState extends State<MyApp> {
               MaterialPageRoute(
                   builder: (BuildContext context) => _datachannel
                       ? DataChannelSample(host: _server)
-                      : CallSample(host: _server)));
+                      : CallSampleUnified(ip: _server, port: '8086')));
         }
       }
     });
@@ -372,7 +364,8 @@ class _MyAppState extends State<MyApp> {
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 hintText: _server,
-                hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
+                hintStyle:
+                    TextStyle(color: Colors.white.withValues(alpha: 0.5)),
                 filled: true,
                 fillColor: Colors.white.withValues(alpha: 0.1),
                 border: OutlineInputBorder(
@@ -405,7 +398,76 @@ class _MyAppState extends State<MyApp> {
                 child: TextButton(
                     child: const Text(
                       'CONNECT',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                          color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                    onPressed: () {
+                      Navigator.pop(context, DialogDemoAction.connect);
+                    }),
+              ),
+            ]));
+  }
+
+  _showAddressDialogWithCallKit(context) {
+    showDemoDialog<DialogDemoAction>(
+        context: context,
+        child: AlertDialog(
+            backgroundColor: const Color(0xFF2C3E50),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: const Text(
+              'Enter server address for CallKeep:',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            content: TextField(
+              onChanged: (String text) {
+                setState(() {
+                  _server = text;
+                });
+              },
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                hintText: _server,
+                hintStyle:
+                    TextStyle(color: Colors.white.withValues(alpha: 0.5)),
+                filled: true,
+                fillColor: Colors.white.withValues(alpha: 0.1),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: Colors.blue, width: 2),
+                ),
+              ),
+              textAlign: TextAlign.center,
+            ),
+            actions: <Widget>[
+              TextButton(
+                  child: const Text(
+                    'CANCEL',
+                    style: TextStyle(color: Colors.white70),
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context, DialogDemoAction.cancel);
+                  }),
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.blue, Colors.purple],
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: TextButton(
+                    child: const Text(
+                      'CONNECT',
+                      style: TextStyle(
+                          color: Colors.white, fontWeight: FontWeight.bold),
                     ),
                     onPressed: () {
                       Navigator.pop(context, DialogDemoAction.connect);
@@ -417,13 +479,19 @@ class _MyAppState extends State<MyApp> {
   _initItems() {
     items = <RouteItem>[
       RouteItem(
-          // title: 'P2P Call Sample',
-          // subtitle: 'P2P Call Sample.',
           title: 'Video Calling App',
-          subtitle: 'Video Calling App.',
+          subtitle: 'Standard video calling.',
           push: (BuildContext context) {
             _datachannel = false;
             _showAddressDialog(context);
+          }),
+      RouteItem(
+          title: 'Video Calling with CallKeep',
+          subtitle:
+              'Native calling experience (iOS CallKit + Android CallKeep).',
+          push: (BuildContext context) {
+            _datachannel = false;
+            _showAddressDialogWithCallKit(context);
           }),
       // RouteItem(
       //     title: 'Data Channel Sample',

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'theme/app_theme.dart';
 
 class SplashScreen extends StatefulWidget {
   @override
@@ -72,18 +73,10 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1E1E1E), // Dark background
+      backgroundColor: AppTheme.darkBackground,
       body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              const Color(0xFF2C3E50),
-              const Color(0xFF34495E),
-              const Color(0xFF1E1E1E),
-            ],
-          ),
+        decoration: const BoxDecoration(
+          gradient: AppTheme.darkGradient,
         ),
         child: Center(
           child: AnimatedBuilder(
@@ -104,19 +97,10 @@ class _SplashScreenState extends State<SplashScreen>
                           width: 120,
                           height: 120,
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.3),
-                              width: 2,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.white.withValues(alpha: 0.1),
-                                blurRadius: 20,
-                                spreadRadius: 5,
-                              ),
-                            ],
+                            gradient: AppTheme.primaryGradient,
+                            borderRadius:
+                                BorderRadius.circular(AppTheme.radiusL),
+                            boxShadow: AppTheme.shadowLarge,
                           ),
                           child: Stack(
                             alignment: Alignment.center,
@@ -129,17 +113,17 @@ class _SplashScreenState extends State<SplashScreen>
                                   shape: BoxShape.circle,
                                   gradient: RadialGradient(
                                     colors: [
-                                      Colors.blue.withValues(alpha: 0.3),
+                                      Colors.white.withValues(alpha: 0.2),
                                       Colors.transparent,
                                     ],
                                   ),
                                 ),
                               ),
                               // Main icon
-                              Icon(
-                                Icons.video_call,
+                              const Icon(
+                                Icons.favorite,
                                 size: 60,
-                                color: Colors.white,
+                                color: AppTheme.textPrimary,
                               ),
                             ],
                           ),
@@ -149,26 +133,17 @@ class _SplashScreenState extends State<SplashScreen>
                       const SizedBox(height: 30),
 
                       // App Title
-                      Text(
-                        'CM Relief Fund ',
-                        style: TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          letterSpacing: 1.2,
-                        ),
+                      const Text(
+                        'CM Relief Fund',
+                        style: AppTheme.heading1,
                       ),
 
                       const SizedBox(height: 10),
 
                       // Subtitle
-                      Text(
-                        'Real-time Communication',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.white.withValues(alpha: 0.7),
-                          letterSpacing: 0.5,
-                        ),
+                      const Text(
+                        'Connecting hearts through video calls',
+                        style: AppTheme.body1,
                       ),
 
                       const SizedBox(height: 50),
@@ -179,8 +154,8 @@ class _SplashScreenState extends State<SplashScreen>
                         height: 40,
                         child: CircularProgressIndicator(
                           strokeWidth: 3,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            Colors.white.withValues(alpha: 0.8),
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                            AppTheme.primaryBlue,
                           ),
                         ),
                       ),
@@ -188,12 +163,9 @@ class _SplashScreenState extends State<SplashScreen>
                       const SizedBox(height: 20),
 
                       // Loading text
-                      Text(
+                      const Text(
                         'Loading...',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.white.withValues(alpha: 0.6),
-                        ),
+                        style: AppTheme.caption,
                       ),
                     ],
                   ),
